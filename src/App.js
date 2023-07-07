@@ -5,10 +5,27 @@ function App() {
   const [name, setName] = useState('');
   const [datetime, setDatetime] = useState('');
   const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
 
   const addNewTransaction = (event) => {
     event.preventDefault();
-    console.log(name, datetime, description);
+    const url = process.env.REACT_APP_API_URL + '/transaction';
+    fetch (url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name,
+        price,
+        datetime,
+        description,
+      }),
+    }).then (response => response.json()).then (data => {
+      console.log('Success:', data);
+    }).catch ((error) => {
+      console.error('Error:', error);
+    });
   }
 
   return (
@@ -18,7 +35,7 @@ function App() {
         <div className='basic'>
           <input 
             type='text' 
-            placeholder={'+200 new Samsung Galaxy S21 5G'}
+            placeholder={'iPhone 13 128GB'}
             value={name}
             onChange={(event) => setName(event.target.value)}
           />
@@ -31,9 +48,15 @@ function App() {
         <div className='description'>
           <input 
             type='text' 
-            placeholder={'description'}
+            placeholder={'Description'}
             value={description}
             onChange={(event) => setDescription(event.target.value)}
+          />
+          <input
+            type='number'
+            placeholder={'Price'}
+            value={price}
+            onChange={(event) => setPrice(event.target.value)}
           />
         </div>
         <button type='submit'>Add new transaction</button>
