@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { format } from 'date-fns';
 import './App.css';
 
 function App() {
@@ -6,31 +7,68 @@ function App() {
   const [datetime, setDatetime] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
+  const [transactions, setTransactions] = useState([]);
+  const [update, setUpdate] = useState(false);
+  const [balance, setBalance] = useState(0);
+  const url = `${process.env.REACT_APP_API_URL}/transactions`;
+  
+  const getTransactions = useCallback(async () => {
+    try {
+      const response = await fetch(url);
 
-  const addNewTransaction = (event) => {
+      if (response.ok) {
+        const data = await response.json();
+        setTransactions(data);
+        calculateBalance(data);
+      } else {
+        throw new Error('API request failed');
+      }
+    } catch (error) {
+      console.error('Error retrieving transactions:', error);
+    }
+  }, [url]);
+
+  useEffect(() => {
+    getTransactions();
+  }, [update, getTransactions]);
+  
+  const calculateBalance = (data) => {
+    const totalBalance = data.reduce((total, transaction) => total + transaction.price, 0);
+    setBalance(totalBalance);
+  };
+
+  const addNewTransaction = async (event) => {
     event.preventDefault();
-    const url = process.env.REACT_APP_API_URL + '/transaction';
-    fetch (url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        name,
-        price,
-        datetime,
-        description,
-      }),
-    }).then (response => response.json()).then (data => {
-      console.log('Success:', data);
-    }).catch ((error) => {
-      console.error('Error:', error);
-    });
-  }
+    const newTransaction = {
+      name,
+      price,
+      datetime,
+      description,
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTransaction),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Success:', data);
+        setTransactions((prevTransactions) => [...prevTransactions, data]);
+        setUpdate((prevUpdate) => !prevUpdate);
+      } else {
+        throw new Error('API request failed');
+      }
+    } catch (error) {
+      console.error('Error:', error.message);
+    }
+  };
 
   return (
     <main>
-      <h1>$400<span>.00</span></h1>
+      <h1><span>Balance:</span> {balance}$</h1>
       <form onSubmit={addNewTransaction}>
         <div className='basic'>
           <input 
@@ -54,7 +92,7 @@ function App() {
           />
           <input
             type='number'
-            placeholder={'Price'}
+            placeholder={'Price (-200) or (200)'}
             value={price}
             onChange={(event) => setPrice(event.target.value)}
           />
@@ -62,36 +100,22 @@ function App() {
         <button type='submit'>Add new transaction</button>
       </form>
       <div className="transactions">
-        <div className="transaction">
-          <div className='left'>
-            <div className="name">Samsung Galaxy S21 5G</div>
-            <div className='description'>it's a new phone</div>
-          </div>
-          <div className="right">
-            <div className='price green'>+$200</div>
-            <div className='date'>2021-01-01 20:00</div>
-          </div>
-        </div>
-        <div className="transaction">
-          <div className='left'>
-            <div className="name">Samsung Galaxy S21 5G</div>
-            <div className='description'>it's a new phone</div>
-          </div>
-          <div className="right">
-            <div className='price red'>-$300</div>
-            <div className='date'>2021-01-01 20:00</div>
-          </div>
-        </div>
-        <div className="transaction">
-          <div className='left'>
-            <div className="name">Samsung Galaxy S21 5G</div>
-            <div className='description'>it's a new phone</div>
-          </div>
-          <div className="right">
-            <div className='price green'>+$200</div>
-            <div className='date'>2021-01-01 20:00</div>
-          </div>
-        </div>
+        {
+          transactions.map((transaction) => {
+            return (
+              <div className="transaction" key={transaction._id}>
+                <div className='left'>
+                  <div className="name">{transaction.name}</div>
+                  <div className='description'>{transaction.description}</div>
+                </div>
+                <div className="right">
+                  <div className={`price ${transaction.price > 0 ? 'green' : 'red'}`}>{transaction.price}$</div>
+                  <div className='date'>{format(new Date(transaction.datetime), 'dd/MM/yyyy')}</div>
+                </div>
+              </div>
+            );
+          }
+        )}
       </div>
     </main>
   );

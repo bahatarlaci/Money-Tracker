@@ -8,15 +8,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get('/api/test', (req, res) => {
-    res.json({ body: 'Hello from server!' });
-});
+mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true });
 
-app.post('/api/transaction', async (req, res) => {
-    await mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true });
+app.post('/api/transactions', async (req, res) => {
     const { name, datetime, description, price } = req.body;
     const newTransaction = await Transaction.create({ name, datetime, description, price });
     res.json(newTransaction);
+});
+
+app.get('/api/transactions', async (req, res) => {
+    const transactions = await Transaction.find().sort({ datetime: -1 }); // date alanına göre sıralama yapılıyor
+    res.json(transactions);
 });
 
 app.listen(4000, () => {
