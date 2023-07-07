@@ -8,10 +8,14 @@ function App() {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [transactions, setTransactions] = useState([]);
-  const [update, setUpdate] = useState(false);
   const [balance, setBalance] = useState(0);
   const url = `${process.env.REACT_APP_API_URL}/transactions`;
-  
+
+  const updateBalance = useCallback((data) => {
+    const totalBalance = data.reduce((total, transaction) => total + transaction.price, 0);
+    setBalance(totalBalance);
+  }, []);
+
   const getTransactions = useCallback(async () => {
     try {
       const response = await fetch(url);
@@ -19,23 +23,14 @@ function App() {
       if (response.ok) {
         const data = await response.json();
         setTransactions(data);
-        calculateBalance(data);
+        updateBalance(data);
       } else {
         throw new Error('API request failed');
       }
     } catch (error) {
       console.error('Error retrieving transactions:', error);
     }
-  }, [url]);
-
-  useEffect(() => {
-    getTransactions();
-  }, [update, getTransactions]);
-  
-  const calculateBalance = (data) => {
-    const totalBalance = data.reduce((total, transaction) => total + transaction.price, 0);
-    setBalance(totalBalance);
-  };
+  }, [url, updateBalance]);
 
   const addNewTransaction = async (event) => {
     event.preventDefault();
@@ -56,8 +51,8 @@ function App() {
       if (response.ok) {
         const data = await response.json();
         console.log('Success:', data);
-        setTransactions((prevTransactions) => [...prevTransactions, data]);
-        setUpdate((prevUpdate) => !prevUpdate);
+        setTransactions([...transactions, data]);
+        updateBalance([...transactions, data]);
       } else {
         throw new Error('API request failed');
       }
@@ -65,6 +60,16 @@ function App() {
       console.error('Error:', error.message);
     }
   };
+
+  useEffect(() => {
+    getTransactions();
+  }, [getTransactions]);
+  
+  useEffect(() => {
+    if (transactions.length > 0) {
+      updateBalance(transactions);
+    }
+  }, [transactions, updateBalance]);
 
   return (
     <main>
