@@ -67,7 +67,6 @@ function App() {
       });
 
       if (response.ok) {
-        const data = await response.json();
         const newTransactions = transactions.filter((transaction) => transaction._id !== id);
         setTransactions(newTransactions);
         updateBalance(newTransactions);
