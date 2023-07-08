@@ -50,13 +50,32 @@ function App() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Success:', data);
         setTransactions([...transactions, data]);
         updateBalance([...transactions, data]);
       } else {
         throw new Error('API request failed');
       }
     } catch (error) {
+      console.error('Error:', error.message);
+    }
+  };
+
+  const handleDelete = (id) => async () => {
+    try {
+      const response = await fetch(`${url}/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const newTransactions = transactions.filter((transaction) => transaction._id !== id);
+        setTransactions(newTransactions);
+        updateBalance(newTransactions);
+      } else {
+        throw new Error('API request failed');
+      }
+    }
+    catch (error) {
       console.error('Error:', error.message);
     }
   };
@@ -116,6 +135,7 @@ function App() {
                 <div className="right">
                   <div className={`price ${transaction.price > 0 ? 'green' : 'red'}`}>{transaction.price}$</div>
                   <div className='date'>{format(new Date(transaction.datetime), 'dd/MM/yyyy')}</div>
+                  <button className='delete' onClick={ handleDelete(transaction._id) }>Delete</button>
                 </div>
               </div>
             );
