@@ -96,6 +96,17 @@ div.right {
   align-items: flex-end;
 }
 
+div.right button.delete {
+  background-color: #F00;
+  color: #fff;
+  border: 0;
+  border-radius: 5px;
+  padding: 5px 15px;
+  height: 30px;
+  font-size: .75rem;
+  font-weight: bold;
+}
+
 div.price.green {
   color: #0F0;
 }

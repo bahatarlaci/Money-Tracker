@@ -16,6 +16,12 @@ app.post('/api/transactions', async (req, res) => {
     res.json(newTransaction);
 });
 
+app.delete('/api/transactions/:id', async (req, res) => {
+    const { id } = req.params;
+    await Transaction.findByIdAndDelete(id);
+    res.json({ message: 'Transaction deleted' });
+});
+
 app.get('/api/transactions', async (req, res) => {
     const transactions = await Transaction.find().sort({ datetime: -1 }); // date alanına göre sıralama yapılıyor
     res.json(transactions);
